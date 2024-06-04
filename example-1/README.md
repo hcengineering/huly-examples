@@ -3,24 +3,102 @@
 This guide will help you understand how to interact with the Huly API for various operations by providing examples of authentication, querying issues, updating issues, and creating new issues. Whether you're integrating Huly into your application or building a custom client, the examples provided here will help you get started.
 
 
-### Authentication
-Before making requests to the Huly API, you'll need to obtain an authentication token. To authenticate with the Huly API, log in with your email and password to receive a token:
+## Authentication
+
+### Obtain tokens
+
+Before making requests to the Huly API, you'll need to obtain an authentication token.
+
+#### 1. **Define login credentials**
+Define the email, password, and workspace name for the workspace you wish to access.
 
 ```ts
- const request = {
+const email = 'user1'
+const password = '1234'
+const workspace = 'ws1'
+```
+
+#### 2. **Create login request** 
+Create a request object with the login method and parameters.
+
+```ts
+const request = {
     method: 'login',
     params: [email, password]
 }
+```
 
-const response = await fetch(accountsUrl, {
+#### 3. **Send login request** 
+Send to the accounts endpoint to obtain the authentication token.
+
+```ts
+const response = await fetch(ACCOUNTS_URL, {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json'
     },
     body: JSON.stringify(request)
 })
-const result = await response.json()
+
+const loginInfo = await sendRequest(request)
 ```
+
+#### **Select workspace**
+Use the obtained token to  select the workspace, allowing you to interact with workspace-specific data.
+
+```ts
+const selectWorkspace = {
+    method: 'selectWorkspace',
+    params: [workspace]
+}
+
+const result = await sendRequest(selectWorkspace, loginInfo.token)
+```
+
+### Connect to the client
+
+After obtaining the token and selecting the workspace, establish a connection to the Huly client to perform operations.
+
+#### 1. **Set up WebSocket factory** 
+Define a factory to create WebSocket connections for the client.
+
+```ts
+async function connect (token: LoginInfo): Promise<Client> {
+  setMetadata(client.metadata.ClientSocketFactory, (url: string) => {
+    return new WebSocket(url)
+  })
+```
+
+#### 2. **Initialize client resources**
+Fetch and initialize client resources required for connecting to the Huly client.
+
+```ts
+  const clientRes = await clientResources()
+```
+
+#### 3. **Create an instance of the client**
+Use the token and endpoint obtained during authentication to create a client instance.
+
+```ts
+  const getCl = await clientRes.function.GetClient(token.token as any, token.endpoint)
+  return getCl
+} 
+
+_client = await connect(result)
+```
+
+#### 4. **Retrieve user account** 
+Use the client instance to find your account by email and set up client operations.
+
+```ts
+const account = await _client.findOne(contact.class.PersonAccount, { email })
+
+me = account._id
+const client = getClientOperations()
+```
+---
+
+## Example usage
 
 ### Querying issues
 Once authenticated, you can query all issues accessible to you using the `client.findAll` method:

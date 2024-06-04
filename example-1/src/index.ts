@@ -73,7 +73,7 @@ let me: Ref<PersonAccount> | undefined
 async function main (): Promise<void> {
   const email = 'user1'
   const password = '1234'
-  const workspace = 'workspace1'
+  const workspace = 'ws1'
   const request = {
     method: 'login',
     params: [email, password]

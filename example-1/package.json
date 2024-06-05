@@ -15,6 +15,7 @@
     "@hcengineering/rpc": "^0.6.5",
     "@hcengineering/core": "^0.6.32",
     "@hcengineering/client-resources": "^0.6.27",
+    "@hcengineering/task": "^0.6.20",
     "@hcengineering/client": "^0.6.18",
     "@hcengineering/platform": "^0.6.11",
     "@hcengineering/contact": "^0.6.24",

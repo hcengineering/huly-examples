@@ -63,38 +63,26 @@ After obtaining the token and selecting the workspace, establish a connection to
 Define a factory to create WebSocket connections for the client.
 
 ```ts
-async function connect (token: LoginInfo): Promise<Client> {
-  setMetadata(client.metadata.ClientSocketFactory, (url: string) => {
-    return new WebSocket(url)
-  })
+setMetadata(client.metadata.ClientSocketFactory, (url: string) => {
+  return new WebSocket(url)
+})
 ```
 
-#### 2. **Initialize client resources**
-Fetch and initialize client resources required for connecting to the Huly client.
+#### 2. **Initialize the connection **
 
-```ts
-  const clientRes = await clientResources()
-```
-
-#### 3. **Create an instance of the client**
 Use the token and endpoint obtained during authentication to create a client instance.
 
 ```ts
-  const getCl = await clientRes.function.GetClient(token.token as any, token.endpoint)
-  return getCl
-} 
-
-_client = await connect(result)
+  const connection = await (await clientResources()).function.GetClient(token.token as any, token.endpoint)
 ```
 
-#### 4. **Retrieve user account** 
+#### 3. **Retrieve user account** 
 Use the client instance to find your account by email and set up client operations.
 
 ```ts
 const account = await _client.findOne(contact.class.PersonAccount, { email })
 
-me = account._id
-const client = getClientOperations()
+const client = new TxOperations(_client, account._id)
 ```
 ---
 

@@ -98,14 +98,11 @@ async function createIssue(client: TxOperations): Promise<Ref<Issue> | undefined
 
   const taskType = await client.findOne(task.class.TaskType, { parent: project.type })
   if (taskType === undefined) return
-  const status = await client.findOne(tracker.class.IssueStatus, {})
-  if (status === undefined) return
-
   const issueToCreate: DocData<Issue> = {
     number: 0,
     title: 'Newly created issue',
     description: '',
-    status: status._id,
+    status: taskType.statuses[0],
     priority: 0,
     component: null,
     subIssues: 0,
@@ -134,8 +131,8 @@ async function updateIssue(client: TxOperations): Promise<Ref<Issue> | undefined
 }
 
 async function removeIssue(client: TxOperations): Promise<void> {
-  const issueToDelete = await client.findOne(tracker.class.Issue, { title: 'Removed assignee' })
-  if (issueToDelete !== undefined) await client.removeDoc(issueToDelete._class, issueToDelete.space, issueToDelete._id)
+  const issueToRemove = await client.findOne(tracker.class.Issue, { title: 'Removed assignee' })
+  if (issueToRemove !== undefined) await client.removeDoc(issueToRemove._class, issueToRemove.space, issueToRemove._id)
 }
 
 async function main(): Promise<void> {
@@ -188,7 +185,7 @@ async function main(): Promise<void> {
     console.log('Updated Issue value', updatedIssue)
   }
 
-  if (args[0] == '--delete') {
+  if (args[0] == '--remove') {
     await removeIssue(client)
   }
 

@@ -10,46 +10,58 @@ This guide will help you understand how to interact with the Huly API for variou
 Before making requests to the Huly API, you'll need to obtain an authentication token.
 
 #### 1. **Define login credentials**
-Define the email, password, and workspace name for the workspace you wish to access.
+Define the email, password, and workspace name in the `env` for the workspace you wish to access.
 
 ```ts
-const email = 'user1'
-const password = '1234'
-const workspace = 'ws1'
+const email = process.env.EMAIL
+const password = process.env.PASSWORD
+const workspace = process.env.WORKSPACE
 ```
 
-#### 2. **Create login request** 
+#### 2. **Set the account URL**
+In the `env`, set the account URL for deployment, stored in the variable `TARGET_DEPLOYMENT`.
+
+```ts
+const deployment = process.env.TARGET_DEPLOYMENT
+  if (deployment !== undefined) {
+    const response = await fetch(deployment + '/config.json')
+    const configJson = await response.json()
+    ACCOUNTS_URL = configJson.ACCOUNTS_URL
+  }
+```
+
+#### 3. **Create login request** 
 Create a request object with the login method and parameters.
 
 ```ts
 const request = {
-    method: 'login',
-    params: [email, password]
+  method: 'login',
+  params: [email, password]
 }
 ```
 
-#### 3. **Send login request** 
+#### 4. **Send login request** 
 Send to the accounts endpoint to obtain the authentication token.
 
 ```ts
 const response = await fetch(ACCOUNTS_URL, {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(request)
+  method: 'POST',
+  headers: {
+      'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(request)
 })
 
 const loginInfo = await sendRequest(request)
 ```
 
-#### **Select workspace**
+#### **5. Select workspace**
 Use the obtained token to  select the workspace, allowing you to interact with workspace-specific data.
 
 ```ts
 const selectWorkspace = {
-    method: 'selectWorkspace',
-    params: [workspace]
+  method: 'selectWorkspace',
+  params: [workspace]
 }
 
 const result = await sendRequest(selectWorkspace, loginInfo.token)
@@ -73,7 +85,7 @@ setMetadata(client.metadata.ClientSocketFactory, (url: string) => {
 Use the token and endpoint obtained during authentication to create a client instance.
 
 ```ts
-  const connection = await (await clientResources()).function.GetClient(token.token as any, token.endpoint)
+const connection = await (await clientResources()).function.GetClient(token.token as any, token.endpoint)
 ```
 
 #### 3. **Retrieve user account** 
@@ -89,30 +101,67 @@ const client = new TxOperations(_client, account._id)
 ## Example usage
 
 ### Querying issues
-Once authenticated, you can query all issues accessible to you using the `client.findAll` method:
+Once authenticated, you can query all issues accessible to you using the `findAll` method:
 
 ```ts
 const issues = await client.findAll(tracker.class.Issue, {})
 ```
-
-### Finding and updating a specific issue
-To find a specific issue by one of its attributes (for example, `_id`), use the `client.findOne` method and pass in the known attribute. 
-
-Then, use the `client.update` method, passing in the attribute to be changed:
+### Creating an issue
+To create a new issue, determine the issue attributes and pass them into the `addCollection` method:
 
 ```ts
-const issue = await client.findOne(tracker.class.Issue, { _id: ... })
-await client.update(issue, { title: 'New Title' }) // new attribute values
-```
-
-### Creating a new issue
-To create a new issue, determine the issue attributes and pass them into the `client.addCollection` method:
-
-```ts
-const issueToCreate: DocData<Issue> = {  
-    // Issue attribute data
-    ...
+const issueToCreate = {
+  number: 0,
+  title: 'Newly created issue',
+  description: '',
+  status: taskType.statuses[0], // default status
+  priority: 0,
+  component: null,
+  subIssues: 0,
+  parents: [],
+  estimation: 0,
+  remainingTime: 0,
+  reportedTime: 0,
+  reports: 0,
+  childInfo: [],
+  kind: taskType._id, // default task type
+  assignee: me?.person ?? null, // sets assignee to self
+  dueDate: null,
+  identifier,
+  rank: makeRank(lastOne?.rank, undefined) // optional, used for ordering issues
 }
 
-await client.addCollection(tracker.class.Issue, space, parent, tracker.class.Issue, 'subIssues', issueToCreate)
+return await client.addCollection(
+  tracker.class.Issue, // refers to the object to create
+  project._id, 
+  tracker.ids.NoParent, // indicates the issue will not be attached to a parent document
+  tracker.class.Issue, // sets the class
+  'subIssues', // name of the collection
+  issueToCreate
+)
+```
+
+### Updating an issue
+To find a specific issue by one of its attributes (for example, `_id`), use the `findOne` method and pass in the known attribute. 
+
+Then, use the `updateDoc` method, passing in the attribute to be changed. 
+
+In this example, the assignee is removed from the issue and the title is set to "Removed assignee":
+
+```ts
+const issueToUpdate = await client.findOne(tracker.class.Issue, {})
+
+if (issueToUpdate !== undefined) {
+  await client.updateDoc(issueToUpdate._class, issueToUpdate.space, issueToUpdate._id, { assignee: null, title: 'Removed assignee' })
+  return issueToUpdate._id
+}
+```
+
+### Removing an issue
+To remove (delete) an issue, find the issue by one of its known attributes and use the `removeDoc` method to remove it. In this example, the issue with the title "Removed assignee" is removed:
+
+```ts
+const issueToRemove = await client.findOne(tracker.class.Issue, { title: 'Removed assignee' })
+
+if (issueToRemove !== undefined) await client.removeDoc(issueToRemove._class, issueToRemove.space, issueToRemove._id)
 ```

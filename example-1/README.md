@@ -1,6 +1,6 @@
 # Huly API
 
-This guide will help you understand how to interact with the Huly API for various operations by providing examples of authentication, querying issues, updating issues, and creating new issues. Whether you're integrating Huly into your application or building a custom client, the examples provided here will help you get started.
+This guide will help you understand how to interact with the Huly API for various operations by providing examples of authentication and performing CRUD operations on issues. Whether you're integrating Huly into your application or building a custom client, the examples provided here will help you get started.
 
 
 ## Authentication
@@ -80,7 +80,7 @@ setMetadata(client.metadata.ClientSocketFactory, (url: string) => {
 })
 ```
 
-#### 2. **Initialize the connection **
+#### 2. **Initialize the connection**
 
 Use the token and endpoint obtained during authentication to create a client instance.
 
@@ -101,7 +101,7 @@ const client = new TxOperations(_client, account._id)
 ## Example usage
 
 ### Querying issues
-Once authenticated, you can query all issues accessible to you using the `findAll` method:
+Once authenticated, you can query all issues accessible to you using the `findAll` method.
 
 ```ts
 const issues = await client.findAll(tracker.class.Issue, {})
@@ -134,7 +134,7 @@ const issueToCreate = {
 return await client.addCollection(
   tracker.class.Issue, // refers to the class of the object to be created
   project._id, 
-  tracker.ids.NoParent, // id of the document to be attached (ex. sub-issue should have parent issue id), if no parent then this id is set
+  tracker.ids.NoParent, // id of the document to be attached to (ex. sub-issue should have parent issue id), if no parent then this id is set
   tracker.class.Issue, // sets the class to which the doc is going to be attached
   'subIssues', // name of the collection
   issueToCreate
@@ -142,11 +142,9 @@ return await client.addCollection(
 ```
 
 ### Updating an issue
-To find a specific issue by one of its attributes (for example, `_id`), use the `findOne` method and pass in the known attribute. 
+Use to `findOne` method to find a specific issue. Then call the `updateDoc` method, passing in the attribute(s) to be updated. 
 
-Then, use the `updateDoc` method, passing in the attribute to be changed. 
-
-In this example, the assignee is removed from the issue and the title is set to "Removed assignee":
+This example demonstrates removing the assignee from an issue and updating the title to "Removed assignee".
 
 ```ts
 const issueToUpdate = await client.findOne(tracker.class.Issue, {})
@@ -158,7 +156,9 @@ if (issueToUpdate !== undefined) {
 ```
 
 ### Removing an issue
-To remove (delete) an issue, find the issue by one of its known attributes and use the `removeDoc` method to remove it. In this example, the issue with the title "Removed assignee" is removed:
+To remove (delete) an issue, find the issue by one of its known attributes and use the `removeDoc` method to remove it. 
+
+In this example, the issue with the title "Removed assignee" is removed.
 
 ```ts
 const issueToRemove = await client.findOne(tracker.class.Issue, { title: 'Removed assignee' })

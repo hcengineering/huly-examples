@@ -114,7 +114,7 @@ const issueToCreate = {
   number: 0,
   title: 'Newly created issue',
   description: '',
-  status: taskType.statuses[0], // default status
+  status: taskType.statuses[0], // status from the one of the task types of the Project to be created in
   priority: 0,
   component: null,
   subIssues: 0,
@@ -124,18 +124,18 @@ const issueToCreate = {
   reportedTime: 0,
   reports: 0,
   childInfo: [],
-  kind: taskType._id, // default task type
-  assignee: me?.person ?? null, // sets assignee to self
+  kind: taskType._id, // one of the task types of the Project to be created in
+  assignee: me.person, // sets assignee to self
   dueDate: null,
   identifier,
-  rank: makeRank(lastOne?.rank, undefined) // optional, used for ordering issues
+  rank: makeRank(lastOne?.rank, undefined) // optional call, used for ordering issues, returns lexorank string
 }
 
 return await client.addCollection(
-  tracker.class.Issue, // refers to the object to create
+  tracker.class.Issue, // refers to the class of the object to be created
   project._id, 
-  tracker.ids.NoParent, // indicates the issue will not be attached to a parent document
-  tracker.class.Issue, // sets the class
+  tracker.ids.NoParent, // id of the document to be attached (ex. sub-issue should have parent issue id), if no parent then this id is set
+  tracker.class.Issue, // sets the class to which the doc is going to be attached
   'subIssues', // name of the collection
   issueToCreate
 )

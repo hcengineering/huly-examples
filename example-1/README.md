@@ -165,3 +165,7 @@ const issueToRemove = await client.findOne(tracker.class.Issue, { title: 'Remove
 
 if (issueToRemove !== undefined) await client.removeDoc(issueToRemove._class, issueToRemove.space, issueToRemove._id)
 ```
+
+## Support
+
+Need help? Get in touch with our team in our [Huly Community](https://join.slack.com/t/hulycommunity/shared_invite/zt-29kl7zmwz-2b3RRVTiWhhtAwzHjBm3Wg) on Slack.

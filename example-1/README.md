@@ -2,6 +2,9 @@
 
 This guide will help you understand how to interact with the Huly API for various operations by providing examples of authentication and performing CRUD operations on issues. Whether you're integrating Huly into your application or building a custom client, the examples provided here will help you get started.
 
+## Installing packages
+
+In order to be able to install required packages, you will need to obtain GitHub access token. You can create a token by following the instructions [here](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#authenticating-with-a-personal-access-token).
 
 ## Authentication
 

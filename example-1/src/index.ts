@@ -1,6 +1,7 @@
 
 import { type Request, type Response } from '@hcengineering/rpc'
-import core, { Client, DocData, Ref, SortingOrder, TxOperations } from '@hcengineering/core'
+import core, { Client, CollaborativeDoc, DocData, generateId, makeCollaborativeDoc, Ref, SortingOrder, TxOperations } from '@hcengineering/core'
+import { CollaboratorClient, getClient } from '@hcengineering/collaborator-client'
 import clientResources from '@hcengineering/client-resources'
 import { setMetadata } from '@hcengineering/platform'
 import client from '@hcengineering/client'
@@ -8,6 +9,7 @@ import { config as dotenvConfig } from 'dotenv'
 import contact, { PersonAccount } from '@hcengineering/contact'
 import tracker, { Issue } from '@hcengineering/tracker'
 import task, { makeRank } from '@hcengineering/task'
+import { htmlToMarkup } from '@hcengineering/text'
 
 const WebSocket = require('ws')
 dotenvConfig()
@@ -25,6 +27,7 @@ interface LoginInfo {
   workspace: string
 }
 let ACCOUNTS_URL: string
+let COLLABORATOR_URL: string
 let clientOperations: TxOperations | undefined
 let me: PersonAccount | undefined
 
@@ -53,7 +56,9 @@ async function sendRequest(request: any, token?: string): Promise<LoginInfo | un
     console.error((err as any).toString())
   }
 }
+
 let _client: Client | Promise<Client>
+
 async function connect(token: LoginInfo): Promise<Client> {
   setMetadata(client.metadata.ClientSocketFactory, (url: string) => {
     return new WebSocket(url)
@@ -72,10 +77,14 @@ function getClientOperations() {
   return clientOperations
 }
 
+function getCollaborator(workspace: string, token: string): CollaboratorClient {
+  return getClient({ name: workspace }, token, COLLABORATOR_URL)
+}
 
-async function createIssue(client: TxOperations): Promise<Ref<Issue> | undefined> {
+async function createIssue(client: TxOperations, collaborator: CollaboratorClient): Promise<Ref<Issue> | undefined> {
   const project = await client.findOne(tracker.class.Project, {})
   if (project === undefined) return
+
   const lastOne = await client.findOne<Issue>(
     tracker.class.Issue,
     { space: project._id },
@@ -96,12 +105,14 @@ async function createIssue(client: TxOperations): Promise<Ref<Issue> | undefined
 
   const identifier = `${project.identifier}-${number}`
 
+  const description = makeCollaborativeDoc(generateId())
+
   const taskType = await client.findOne(task.class.TaskType, { parent: project.type })
   if (taskType === undefined) return
   const issueToCreate: DocData<Issue> = {
     number: 0,
     title: 'Newly created issue',
-    description: '',
+    description,
     status: taskType.statuses[0],
     priority: 0,
     component: null,
@@ -119,6 +130,7 @@ async function createIssue(client: TxOperations): Promise<Ref<Issue> | undefined
     rank: makeRank(lastOne?.rank, undefined)
   }
 
+  await collaborator.updateContent(description, { description: htmlToMarkup('<p>Issue description</p>') })
   return await client.addCollection(tracker.class.Issue, project._id, tracker.ids.NoParent, tracker.class.Issue, 'subIssues', issueToCreate)
 }
 
@@ -141,6 +153,7 @@ async function main(): Promise<void> {
     const response = await fetch(deployment + '/config.json')
     const configJson = await response.json()
     ACCOUNTS_URL = configJson.ACCOUNTS_URL
+    COLLABORATOR_URL = configJson.COLLABORATOR_URL
   }
 
   const args = process.argv.slice(2)
@@ -165,6 +178,8 @@ async function main(): Promise<void> {
 
   _client = await connect(result)
 
+  const collaborator = getCollaborator(workspace, loginInfo.token)
+
   const account = await _client.findOne(contact.class.PersonAccount, { email })
   if (account === undefined) {
     console.error('account not found')
@@ -174,7 +189,7 @@ async function main(): Promise<void> {
   const client = getClientOperations()
 
   if (args[0] === '--create') {
-    const createdIssueId = await createIssue(client)
+    const createdIssueId = await createIssue(client, collaborator)
     const issue = await client.findOne(tracker.class.Issue, { _id: createdIssueId })
     console.log('You\'ve created issue: ', issue)
   }

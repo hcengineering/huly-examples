@@ -12,7 +12,7 @@
     "declarationMap": true,
     "experimentalDecorators": true,
     "esModuleInterop": true,
-    "rootDir": "./src",
+    "rootDir": "examples",
     "outDir": "./lib",
     "incremental": true,
     "isolatedModules": true

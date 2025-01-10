@@ -1,5 +1,5 @@
 //
-// Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2025 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,29 +15,50 @@
 
 import { NodeWebSocketFactory, connect } from '@hcengineering/api-client'
 import { SortingOrder } from '@hcengineering/core'
+import task from '@hcengineering/task'
 import tracker from '@hcengineering/tracker'
 
-const url = 'http://localhost:8087'
-const email = 'user1'
-const password = '1234'
-const workspace = 'ws3'
-const socketFactory = NodeWebSocketFactory
+const url = process.env.HULY_URL ?? 'http://localhost:8087'
+const email = process.env.HULY_EMAIL ?? 'user1'
+const password = process.env.HULY_PASSWORD ?? '1234'
+const workspace = process.env.HULY_WORKSPACE ?? 'ws1'
 
+const socketFactory = NodeWebSocketFactory
+const connectionTimeout = 30000
+
+/**
+ * Example demonstrating how to list issues in a project using the Huly Platform API.
+ * This script:
+ * 1. Finds a project by identifier
+ * 2. Fetches all issues in the project
+ */
 async function main (): Promise<void> {
-  const client = await connect(url, { email, password, workspace, socketFactory })
+  const client = await connect(url, { email, password, workspace, socketFactory, connectionTimeout })
 
   try {
+    // Find project by identifier
     const project = await client.findOne(
       tracker.class.Project,
       {
         identifier: 'HULY'
+      }, {
+        lookup: {
+          type: task.class.ProjectType
+        }
       }
     )
     if (project === undefined) {
       throw new Error('Project not found')
     }
     console.log('project:', project.identifier, project.description)
+    if (project.$lookup?.type !== undefined) {
+      const projectType = project.$lookup.type
+      for (const status of projectType.statuses) {
+        console.log('-', status)
+      }
+    }
 
+    // Find issues in the project
     const issues = await client.findAll(
       tracker.class.Issue,
       {
@@ -53,9 +74,11 @@ async function main (): Promise<void> {
 
     console.log('found issues:', issues.length)
     for (const issue of issues) {
-      const markup = await client.fetchMarkup(issue._id, 'description', issue.description, 'markdown')
       console.log('-', issue.identifier, issue.title)
-      console.log(markup)
+      if (issue.description) {
+        const markup = await client.fetchMarkup(issue._class, issue._id, 'description', issue.description, 'markdown')
+        console.log('  ', markup)
+      }
     }
   } finally {
     await client.close()
@@ -66,5 +89,6 @@ if (require.main === module) {
   void main()
     .catch((err) => {
       console.error(err)
+      process.exit(1)
     })
 }

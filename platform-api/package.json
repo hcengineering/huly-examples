@@ -12,16 +12,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@hcengineering/core": "^0.6.351",
-    "@hcengineering/rank": "^0.6.351",
-    "@hcengineering/tracker": "^0.6.351",
-    "@hcengineering/api-client": "^0.6.351",
+    "@hcengineering/api-client": "^0.6.377",
+    "@hcengineering/core": "^0.6.377",
+    "@hcengineering/rank": "^0.6.377",
+    "@hcengineering/tracker": "^0.6.377",
     "ws": "^8.16.0"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
-    "ts-node": "^10.8.0",
+    "@types/node": "^17.0.0",
     "@types/ws": "^8.5.3",
-    "@types/node": "^17.0.0"
+    "ts-node": "^10.8.0",
+    "typescript": "^5.3.3"
   }
 }

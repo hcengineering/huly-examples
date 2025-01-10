@@ -1,5 +1,5 @@
 //
-// Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2025 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,21 +13,31 @@
 // limitations under the License.
 //
 
-import { NodeWebSocketFactory, connect } from '@hcengineering/api-client'
+import { ConnectOptions, NodeWebSocketFactory, connect } from '@hcengineering/api-client'
 import core, { type Ref, SortingOrder, generateId } from '@hcengineering/core'
 import { makeRank } from '@hcengineering/rank'
 import tracker, { type Issue, IssuePriority } from '@hcengineering/tracker'
 
-const url = 'http://localhost:8087'
-const email = 'user1'
-const password = '1234'
-const workspace = 'ws3'
-const socketFactory = NodeWebSocketFactory
+const url = process.env.HULY_URL ?? 'http://localhost:8087'
+const options: ConnectOptions = {
+  email: process.env.HULY_URL ?? 'http://localhost:8087',
+  password: process.env.HULY_PASSWORD ?? '1234',
+  workspace: process.env.HULY_WORKSPACE ?? 'ws1',
+  socketFactory: NodeWebSocketFactory,
+  connectionTimeout: 30000
+}
 
+/**
+ * Example demonstrating how to create an issue in a project using the Huly Platform API.
+ * This script:
+ * 1. Finds a project by identifier
+ * 2. Creates a new issue
+ */
 async function main (): Promise<void> {
-  const client = await connect(url, { email, password, workspace, socketFactory })
+  const client = await connect(url, options)
 
   try {
+    // Find project by identifier
     const project = await client.findOne(
       tracker.class.Project,
       {
@@ -68,8 +78,7 @@ async function main (): Promise<void> {
       }
     )
 
-    // Upload description
-    const description = await client.uploadMarkup(issueId, 'description', `
+    const description = await client.uploadMarkup(tracker.class.Issue, issueId, 'description', `
 # Make coffee
 
 Do morning coffee using drip coffee maker.
@@ -79,7 +88,7 @@ Do morning coffee using drip coffee maker.
 * Press start button
 
 Enjoy your coffee.
-      `, 'markdown')
+`, 'markdown')
 
     // Create issue
     await client.addCollection(
@@ -116,9 +125,11 @@ Enjoy your coffee.
       throw new Error('Issue not found')
     }
 
-    const markup = await client.fetchMarkup(issue._id, 'description', issue.description, 'markdown')
     console.log('created issue:', issue)
-    console.log(markup)
+    if (issue.description) {
+      const markup = await client.fetchMarkup(issue._class, issue._id, 'description', issue.description, 'markdown') 
+      console.log(markup)
+    }
   } finally {
     await client.close()
   }
@@ -128,5 +139,6 @@ if (require.main === module) {
   void main()
     .catch((err) => {
       console.error(err)
+      process.exit(1)
     })
 }

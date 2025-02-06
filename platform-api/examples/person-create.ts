@@ -19,7 +19,7 @@ import { generateId } from '@hcengineering/core'
 
 const url = process.env.HULY_URL ?? 'http://localhost:8087'
 const options: ConnectOptions = {
-  email: process.env.HULY_URL ?? 'http://localhost:8087',
+  email: process.env.HULY_EMAIL ?? 'user1',
   password: process.env.HULY_PASSWORD ?? '1234',
   workspace: process.env.HULY_WORKSPACE ?? 'ws1',
   socketFactory: NodeWebSocketFactory,

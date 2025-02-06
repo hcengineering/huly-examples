@@ -13,18 +13,19 @@
 // limitations under the License.
 //
 
-import { NodeWebSocketFactory, connect } from '@hcengineering/api-client'
+import { ConnectOptions, NodeWebSocketFactory, connect } from '@hcengineering/api-client'
 import { SortingOrder } from '@hcengineering/core'
 import task from '@hcengineering/task'
 import tracker from '@hcengineering/tracker'
 
 const url = process.env.HULY_URL ?? 'http://localhost:8087'
-const email = process.env.HULY_EMAIL ?? 'user1'
-const password = process.env.HULY_PASSWORD ?? '1234'
-const workspace = process.env.HULY_WORKSPACE ?? 'ws1'
-
-const socketFactory = NodeWebSocketFactory
-const connectionTimeout = 30000
+const options: ConnectOptions = {
+  email: process.env.HULY_EMAIL ?? 'user1',
+  password: process.env.HULY_PASSWORD ?? '1234',
+  workspace: process.env.HULY_WORKSPACE ?? 'ws1',
+  socketFactory: NodeWebSocketFactory,
+  connectionTimeout: 30000
+}
 
 /**
  * Example demonstrating how to list issues in a project using the Huly Platform API.
@@ -33,7 +34,7 @@ const connectionTimeout = 30000
  * 2. Fetches all issues in the project
  */
 async function main (): Promise<void> {
-  const client = await connect(url, { email, password, workspace, socketFactory, connectionTimeout })
+  const client = await connect(url, options)
 
   try {
     // Find project by identifier

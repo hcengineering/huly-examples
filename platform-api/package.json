@@ -12,10 +12,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@hcengineering/api-client": "^0.6.377",
-    "@hcengineering/core": "^0.6.377",
-    "@hcengineering/rank": "^0.6.377",
-    "@hcengineering/tracker": "^0.6.377",
+    "@hcengineering/api-client": "^0.6.429",
+    "@hcengineering/core": "^0.6.429",
+    "@hcengineering/document": "^0.6.429",
+    "@hcengineering/rank": "^0.6.429",
+    "@hcengineering/tracker": "^0.6.429",
     "ws": "^8.16.0"
   },
   "devDependencies": {

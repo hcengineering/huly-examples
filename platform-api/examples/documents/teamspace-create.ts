@@ -13,11 +13,12 @@
 // limitations under the License.
 //
 
-import { ConnectOptions, NodeWebSocketFactory, connect } from '@hcengineering/api-client'
-import contact from '@hcengineering/contact'
+import { NodeWebSocketFactory, connect } from '@hcengineering/api-client'
+import core from '@hcengineering/core'
+import document from '@hcengineering/document'
 
 const url = process.env.HULY_URL ?? 'http://localhost:8087'
-const options: ConnectOptions = {
+const options = {
   email: process.env.HULY_EMAIL ?? 'user1',
   password: process.env.HULY_PASSWORD ?? '1234',
   workspace: process.env.HULY_WORKSPACE ?? 'ws1',
@@ -26,31 +27,35 @@ const options: ConnectOptions = {
 }
 
 /**
- * Example demonstrating how to querypersons using the Huly Platform API.
+ * Example demonstrating how to create a teamspace using the Huly Platform API.
  * This script:
- * 1. Finds all persons
- * 2. Prints the persons and their contact channels
+ * 1. Creates a public teamspace
+ * 2. Displays the created teamspace
  */
 async function main (): Promise<void> {
   const client = await connect(url, options)
 
   try {
-    const persons = await client.findAll(contact.class.Person, {})
+    const account = client.getAccount()
 
-    console.log('found persons:', persons.length)
-    for (const person of persons) {
-      const channels = await client.findAll(
-        contact.class.Channel, {
-          attachedTo: person._id,
-          attachedToClass: person._class
-        }
-      )
-
-      console.log('-', person.name, person.city)
-      for (const channel of channels) {
-        console.log('  -', channel.value)
+    // Create a teamspace
+    const teamspaceId = await client.createDoc(
+      document.class.Teamspace,
+      core.space.Space,
+      {
+        name: 'My Documents',
+        description: 'Space for my shared documents',
+        private: false,
+        archived: false,
+        members: [account._id],
+        owners: [account._id],
+        icon: document.icon.Teamspace,
+        type: document.spaceType.DefaultTeamspaceType
       }
-    }
+    )
+
+    const teamspace = await client.findOne(document.class.Teamspace, { _id: teamspaceId }) 
+    console.log('created teamspace:', teamspace) 
   } finally {
     await client.close()
   }

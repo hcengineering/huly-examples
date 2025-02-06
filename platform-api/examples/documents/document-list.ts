@@ -14,7 +14,8 @@
 //
 
 import { ConnectOptions, NodeWebSocketFactory, connect } from '@hcengineering/api-client'
-import contact from '@hcengineering/contact'
+import { SortingOrder } from '@hcengineering/core'
+import document from '@hcengineering/document'
 
 const url = process.env.HULY_URL ?? 'http://localhost:8087'
 const options: ConnectOptions = {
@@ -26,29 +27,48 @@ const options: ConnectOptions = {
 }
 
 /**
- * Example demonstrating how to querypersons using the Huly Platform API.
+ * Example demonstrating how to list documents using the Huly Platform API.
  * This script:
- * 1. Finds all persons
- * 2. Prints the persons and their contact channels
- */
+ * 1. Finds a teamspace by name
+ * 2. Fetches all documents in the teamspace
+*/
 async function main (): Promise<void> {
   const client = await connect(url, options)
 
   try {
-    const persons = await client.findAll(contact.class.Person, {})
+    // Find teamspace by name
+    const teamspace = await client.findOne(
+      document.class.Teamspace,
+      {
+        name: 'My Documents',
+        archived: false
+      }
+    )
 
-    console.log('found persons:', persons.length)
-    for (const person of persons) {
-      const channels = await client.findAll(
-        contact.class.Channel, {
-          attachedTo: person._id,
-          attachedToClass: person._class
+    if (teamspace === undefined) {
+      throw new Error('Teamspace not found')
+    }
+    console.log('teamspace:', teamspace)
+
+    const documents = await client.findAll(
+      document.class.Document,
+      {
+        space: teamspace._id
+      },
+      {
+        limit: 20,
+        sort: {
+          name: SortingOrder.Ascending
         }
-      )
+      }
+    )
 
-      console.log('-', person.name, person.city)
-      for (const channel of channels) {
-        console.log('  -', channel.value)
+    console.log('documents:', documents.length) 
+    for (const doc of documents) {
+      console.log('-', doc.title)
+      if (doc.content) {
+        const markup = await client.fetchMarkup(doc._class, doc._id, 'content', doc.content, 'markdown')
+        console.log('  ', markup)
       }
     }
   } finally {
